@@ -63,7 +63,7 @@ bool static_show_domain(
     else if(options.get_bool_option("intervals"))
       domain=new ait<interval_domaint>();
     else if(options.get_bool_option("dependence-graph"))
-      domain=new dependence_grapht(ns);
+      domain=new dependence_grapht(goto_model.goto_functions, ns);
   }
   else if(options.get_bool_option("concurrent"))
   {
@@ -93,9 +93,9 @@ bool static_show_domain(
   m.status() << "Outputting abstract states" << messaget::eom;
 
   if(options.get_bool_option("json"))
-    out << domain->output_json(goto_model);
+    out << domain->output_json(goto_model) << "\n";
   else if(options.get_bool_option("xml"))
-    out << domain->output_xml(goto_model);
+    out << domain->output_xml(goto_model) << "\n";
   else if(options.get_bool_option("dot") &&
           options.get_bool_option("dependence-graph"))
   {

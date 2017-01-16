@@ -31,9 +31,11 @@ class rw_range_sett;
 class goto_functionst;
 
 void goto_rw(goto_programt::const_targett target,
+             const goto_functionst &goto_functions,
              rw_range_sett &rw_set);
 
 void goto_rw(const goto_programt &goto_program,
+             const goto_functionst &goto_functions,
              rw_range_sett &rw_set);
 
 void goto_rw(const goto_functionst &goto_functions,
@@ -62,7 +64,7 @@ inline range_spect to_range_spect(const mp_integer &size)
 // each element x represents a range of bits [x.first, x.second.first)
 class range_domaint:
   public range_domain_baset,
-  public std::list<std::pair<range_spect, range_spect> >
+  public std::list<std::pair<exprt, std::pair<range_spect, range_spect> > >
 {
 public:
   virtual void output(const namespacet &ns, std::ostream &out) const;
@@ -123,16 +125,24 @@ public:
 
   virtual void get_objects_rec(const typet &type);
 
+  virtual void get_objects_rec(
+    get_modet mode,
+    const exprt &expr,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
+
+  virtual void get_objects_rec(
+    get_modet mode,
+    const exprt &expr,
+    const range_spect &range_start,
+    const range_spect &size,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
+
   void output(std::ostream &out) const;
 
 protected:
   const namespacet &ns;
 
   objectst r_range_set, w_range_set;
-
-  virtual void get_objects_rec(
-    get_modet mode,
-    const exprt &expr);
 
   virtual void get_objects_complex(
     get_modet mode,
@@ -144,7 +154,8 @@ protected:
     get_modet mode,
     const if_exprt &if_expr,
     const range_spect &range_start,
-    const range_spect &size);
+    const range_spect &size,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
 
   // overload to include expressions read/written
   // through dereferencing
@@ -152,7 +163,8 @@ protected:
     get_modet mode,
     const dereference_exprt &deref,
     const range_spect &range_start,
-    const range_spect &size);
+    const range_spect &size,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
 
   virtual void get_objects_byte_extract(
     get_modet mode,
@@ -170,13 +182,15 @@ protected:
     get_modet mode,
     const member_exprt &expr,
     const range_spect &range_start,
-    const range_spect &size);
+    const range_spect &size,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
 
   virtual void get_objects_index(
     get_modet mode,
     const index_exprt &expr,
     const range_spect &range_start,
-    const range_spect &size);
+    const range_spect &size,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
 
   virtual void get_objects_array(
     get_modet mode,
@@ -194,21 +208,19 @@ protected:
     get_modet mode,
     const typecast_exprt &tc,
     const range_spect &range_start,
-    const range_spect &size);
+    const range_spect &size,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
 
-  virtual void get_objects_address_of(const exprt &object);
-
-  virtual void get_objects_rec(
-    get_modet mode,
-    const exprt &expr,
-    const range_spect &range_start,
-    const range_spect &size);
+  virtual void get_objects_address_of(
+    const exprt &object,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
 
   virtual void add(
     get_modet mode,
     const irep_idt &identifier,
     const range_spect &range_start,
-    const range_spect &range_end);
+    const range_spect &range_end,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
 };
 
 inline std::ostream &operator << (
@@ -218,6 +230,33 @@ inline std::ostream &operator << (
   rw_set.output(out);
   return out;
 }
+
+// Get objects accessed from an expression returned by the value set
+// analysis
+class rw_range_set_objectst:public rw_range_sett
+{
+public:
+  virtual ~rw_range_set_objectst() {};
+
+  explicit rw_range_set_objectst(const namespacet &_ns):rw_range_sett(_ns)
+  {
+  }
+
+protected:
+  virtual void get_objects_if(
+    get_modet mode,
+    const if_exprt &if_expr,
+    const range_spect &range_start,
+    const range_spect &size,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
+
+  virtual void get_objects_index(
+    get_modet mode,
+    const index_exprt &expr,
+    const range_spect &range_start,
+    const range_spect &size,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
+};
 
 class value_setst;
 
@@ -253,7 +292,8 @@ protected:
     get_modet mode,
     const dereference_exprt &deref,
     const range_spect &range_start,
-    const range_spect &size);
+    const range_spect &size,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
 };
 
 class guarded_range_domaint:
@@ -299,13 +339,15 @@ protected:
     get_modet mode,
     const if_exprt &if_expr,
     const range_spect &range_start,
-    const range_spect &size);
+    const range_spect &size,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
 
   virtual void add(
     get_modet mode,
     const irep_idt &identifier,
     const range_spect &range_start,
-    const range_spect &range_end);
+    const range_spect &range_end,
+    const exprt &object_expr=static_cast<const exprt &>(get_nil_irep()));
 };
 
 #endif // CPROVER_ANALYSES_GOTO_RW_H
