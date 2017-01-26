@@ -8,6 +8,7 @@ SRC = natural_loops.cpp is_threaded.cpp dirty.cpp interval_analysis.cpp \
       flow_insensitive_analysis.cpp \
       custom_bitvector_analysis.cpp escape_analysis.cpp global_may_alias.cpp \
       does_remove_const.cpp \
+      unwind_bounds.cpp \
       # Empty last line
 
 INCLUDES= -I ..

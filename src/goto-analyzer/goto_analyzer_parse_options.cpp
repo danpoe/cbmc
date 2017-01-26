@@ -36,6 +36,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <analyses/is_threaded.h>
 #include <analyses/goto_check.h>
 #include <analyses/local_may_alias.h>
+#include <analyses/unwind_bounds.h>
 
 #include <langapi/mode.h>
 
@@ -483,6 +484,72 @@ int goto_analyzer_parse_optionst::doit()
       }
     }
 
+    if(cmdline.isset("unwind-bounds"))
+    {
+      namespacet ns(goto_model.symbol_table);
+
+      remove_skip(goto_model.goto_functions, true);
+      goto_model.goto_functions.update();
+      goto_model.goto_functions.compute_loop_numbers();
+
+      // default arguments
+      bool dependent_loops=true;
+      unsigned threshold=100;
+      unsigned threshold_loop=100000;
+      unwind_boundst::function_call_handlingt function_call_handling=
+        unwind_boundst::NO_BODY;
+
+      if(cmdline.isset("unwind-bounds-threshold"))
+      {
+        threshold=unsafe_string2unsigned(
+          cmdline.get_value("unwind-bounds-threshold"));
+      }
+
+      bool ignore;
+      bool full;
+
+      ignore=cmdline.isset("--functions-ignore");
+      full=cmdline.isset("--functions-full");
+
+      if(ignore && full)
+        throw "only one of --functions-ignore and --functions-full supported "
+              "at a time";
+
+      if(ignore)
+        function_call_handling=unwind_boundst::UNDER;
+      else if(full)
+        function_call_handling=unwind_boundst::FULL;
+
+      unwind_boundst unwind_bounds(
+        goto_model,
+        dependent_loops,
+        threshold,
+        threshold_loop,
+        function_call_handling);
+
+      unwind_bounds();
+
+      if(!options.get_bool_option("text"))
+      {
+        error() << "Only plain text output supported" << eom;
+        return 6;
+      }
+
+      if(cmdline.isset("unwindset"))
+        unwind_bounds.output_unwindset(*out);
+      else
+        unwind_bounds.output(*out);
+
+  #if 0
+      goto_model.output(std::cout);
+  #endif
+
+      if (out!=&std::cout)
+        delete out;
+
+      return 0;
+    }
+
     // Run the analysis
     bool result=true;
     if(options.get_bool_option("show"))
@@ -721,6 +788,11 @@ void goto_analyzer_parse_optionst::help()
     " --dot file_name              output results in DOT format to given file\n"
     "\n"
     "Other analyses:\n"
+    " --unwind-bounds              compute unwind bounds\n"
+    " --unwind-bounds-threshold    maximum bound\n"
+    " --unwindset                  output unwind set\n"
+    " --functions-ignore           ignore function calls in loop bodies\n"
+    " --functions-full             recurse into functions in loop bodies\n"
     // NOLINTNEXTLINE(whitespace/line_length)
     " --taint file_name            perform taint analysis using rules in given file\n"
     " --unreachable-instructions   list dead code\n"
