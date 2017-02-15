@@ -503,6 +503,8 @@ int goto_instrument_parse_optionst::doit()
     {
       do_indirect_call_and_rtti_removal();
 
+      status() << "Reaching definitions analysis" << eom;
+
       const namespacet ns(symbol_table);
       reaching_definitions_analysist rd_analysis(ns);
       rd_analysis(goto_functions, ns);
