@@ -37,13 +37,13 @@ Author: Peter Schrammel
  \*******************************************************************/
 
 void lock_graph_cs_domaint::transform(locationt from_l,
-				      locationt to_l,
-				      const ai_cs_stackt &stack,
-				      ai_cs_baset &ai,
-				      const namespacet &ns)
+    locationt to_l,
+    const ai_cs_stackt &stack,
+    ai_cs_baset &ai,
+    const namespacet &ns)
 {
   lock_graph_analysis_cst &lock_graph_analysis =
-    static_cast<lock_graph_analysis_cst &>(ai);
+      static_cast<lock_graph_analysis_cst &>(ai);
 
   switch (from_l->type)
   {
@@ -59,52 +59,96 @@ void lock_graph_cs_domaint::transform(locationt from_l,
 
 #ifdef DEBUG
       std::cout << "CALL: " << function_name 
-	        << " at " << stack
-		<< std::endl;
+          << " at " << stack
+          << std::endl;
 #endif
       lock_graph_analysis.statistics.threads.insert(
-	lock_graph_analysis.get_thread_id(stack));
-      
+          lock_graph_analysis.get_thread_id(stack));
+
       if (function_name == config.ansi_c.lock_function)
       {
-	lock_graph_analysis.statistics.no_lock_operations++;
-	
-	// retrieve argument
+        lock_graph_analysis.statistics.no_lock_operations++;
+
+        // retrieve argument
         // ASSUMPTION: lock is in the first argument
-	assert(code.arguments().size() >= 1);
-	exprt arg = code.arguments()[0];
+        assert(code.arguments().size() >= 1);
+        exprt arg = code.arguments()[0];
 #ifdef DEBUG
-	std::cout << "ARG: " << from_expr(ns,"",arg) << std::endl;
+        std::cout << "ARG: " << from_expr(ns,"",arg) << std::endl;
 #endif
-	ai_cs_baset::placet place(stack,from_l);
-	const value_sett::object_mapt &locks_owned =
-	  lock_graph_analysis.lock_set_analysis[place].object_map;
-	const value_sett::object_mapt &locks_to =
-	  lock_graph_analysis.lock_set_analysis[ai_cs_baset::placet(stack,to_l)].object_map;
+        ai_cs_baset::placet place(stack,from_l);
+        const value_sett::object_mapt &locks_owned =
+            lock_graph_analysis.lock_set_analysis[place].object_map;
+        const value_sett::object_mapt &locks_to =
+            lock_graph_analysis.lock_set_analysis[ai_cs_baset::placet(stack,to_l)].object_map;
 
-	value_sett::object_mapt locks_acquired;
-	lock_graph_analysis.lock_set_analysis.value_set_analysis[place].
-	  base.value_set.get_value_set(arg, locks_acquired, ns, false);
-	assert(!locks_acquired.read().empty());
+        value_sett::object_mapt locks_acquired;
+        lock_graph_analysis.lock_set_analysis.value_set_analysis[place].
+          base.value_set.get_value_set(arg, locks_acquired, ns, false);
+        assert(!locks_acquired.read().empty());
 
-	for(value_sett::object_map_dt::const_iterator it = locks_acquired.read().begin();
-	    it != locks_acquired.read().end(); ++it)
-	{
-	  if(value_sett::object_map_dt::is_top(*it))
-	    lock_graph_analysis.statistics.no_indet_lock_operations++;
-	}
-	
-	lock_graph_analysis.graph.add_lock(ns,locks_owned.read(),place,locks_acquired.read());
+        for(value_sett::object_map_dt::const_iterator it = locks_acquired.read().begin();
+            it != locks_acquired.read().end(); ++it)
+        {
+          if(value_sett::object_map_dt::is_top(*it))
+            lock_graph_analysis.statistics.no_indet_lock_operations++;
+        }
 
-	lock_graph_analysis.statistics.size_largest_lock_set =
-	  std::max(lock_graph_analysis.statistics.size_largest_lock_set,
-		   locks_to.read().size());
+        lock_graph_analysis.graph.add_lock(ns,locks_owned.read(),place,locks_acquired.read());
+
+        lock_graph_analysis.statistics.size_largest_lock_set =
+            std::max(lock_graph_analysis.statistics.size_largest_lock_set,
+                locks_to.read().size());
+
+        // detect of potential self-deadlocks
+
+        {
+          unsigned n1=locks_acquired.read().size();
+          unsigned n2=locks_owned.read().size();
+
+          for(value_sett::object_map_dt::const_iterator a_it=
+              locks_acquired.read().begin(); a_it!=locks_acquired.read().end();
+              ++a_it)
+          {
+            if(value_sett::object_numbering[a_it->first].id()=="NULL-object")
+              continue;
+
+            for(value_sett::object_map_dt::const_iterator o_it=
+                locks_owned.read().begin(); o_it!=locks_owned.read().end();
+                ++o_it)
+            {
+              if(value_sett::object_numbering[o_it->first].id()=="NULL-object")
+                continue;
+
+              if(value_sett::object_map_dt::is_top(*a_it) ||
+                 value_sett::object_map_dt::is_top(*o_it))
+              {
+                assert(n1>0);
+                assert(n2>0);
+                lock_graph_analysis.type1_self_deadlock=true;
+                continue;
+              }
+
+              if(*a_it==*o_it)
+              {
+                if(n1>1 || n2>1)
+                {
+                  lock_graph_analysis.type2_self_deadlock=true;
+                }
+                else
+                {
+                  lock_graph_analysis.type3_self_deadlock=true;
+                }
+              }
+            }
+          }
+        }
       } 
     } // if symbol
   } // case switch
   default:
     break;
-	
+
   } // switch
 }
 
@@ -250,6 +294,24 @@ bool lock_graph_analysis_cst::check_cycle(
 void lock_graph_analysis_cst::output_deadlocks(const namespacet &ns,
 				   std::ostream &out)
 {
+  if(type1_self_deadlock)
+  {
+    type2_self_deadlock=false;
+    type3_self_deadlock=false;
+  }
+
+  if(type2_self_deadlock)
+  {
+    type3_self_deadlock=false;
+  }
+
+  out << "* potential self deadlocks type1    " << type1_self_deadlock
+      << std::endl;
+  out << "* potential self deadlocks type2    " << type2_self_deadlock
+      << std::endl;
+  out << "* potential self deadlocks type3    " << type3_self_deadlock
+      << std::endl;
+
   out << "* potential deadlocks    " 
       << potential_deadlocks.size() << std::endl;
 

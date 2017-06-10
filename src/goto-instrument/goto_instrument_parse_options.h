@@ -43,7 +43,7 @@ Author: Daniel Kroening, kroening@kroening.com
   "(function-enter):(function-exit):(branch):" \
   "(signed-overflow-check)(unsigned-overflow-check)(float-overflow-check)" \
   "(show-goto-functions)(show-value-sets)(show-local-may-alias)" \
-  "(show-sharing)(show-lock-sets)(show-deadlocks)" \
+  "(show-sharing)(show-lock-sets)(show-deadlocks)(self-deadlocks)" \
   "(create-thread-function):(create-thread-arg-no):(create-thread-arg-no-of-arg):(join-thread-function):" \
   "(lock-function):(unlock-function):" \
   "(escape-analysis)(show-escape-analysis)" \

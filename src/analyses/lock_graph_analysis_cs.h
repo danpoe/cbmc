@@ -49,7 +49,6 @@ public:
 
 };
 
-
 class xmlt;
 
 class lock_graph_analysis_cst:
@@ -66,6 +65,9 @@ public:
     ai_cst<lock_graph_cs_domaint>(_in_loop),
     non_concurrent(_non_concurrent),
     lock_set_analysis(_lock_set_analysis),
+    type1_self_deadlock(false),
+    type2_self_deadlock(false),
+    type3_self_deadlock(false),
     cycle_visitor(*this)
    {
    }
@@ -79,6 +81,9 @@ public:
     ai_cst<lock_graph_cs_domaint>(_in_loop, stack_numbering),
     non_concurrent(_non_concurrent),
     lock_set_analysis(_lock_set_analysis),
+    type1_self_deadlock(false),
+    type2_self_deadlock(false),
+    type3_self_deadlock(false),
     cycle_visitor(*this)
    {
    }
@@ -129,6 +134,15 @@ public:
   };
   statisticst statistics;
 
+  // involving an indeterminate lock
+  bool type1_self_deadlock;
+
+  // involving non-singleton locksets
+  bool type2_self_deadlock;
+
+  // only singleton locksets
+  bool type3_self_deadlock;
+
   virtual void show(
     const namespacet &ns,
     ui_message_handlert::uit ui,
@@ -161,6 +175,5 @@ protected:
 
   bool check_cycle(const lock_graph_cst::patht &cycle);
 };
-
 
 #endif

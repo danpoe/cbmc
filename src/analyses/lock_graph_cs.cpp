@@ -87,9 +87,9 @@ bool lock_graph_cst::has_edge(node_indext n1, node_indext n2,
 \*******************************************************************/
 
 void lock_graph_cst::add_lock(const namespacet &ns,
-			      const lock_typet &locks_owned,
-			      const ai_cs_baset::placet &place,
-			      const lock_typet &locks_acquired)
+    const lock_typet &locks_owned,
+    const ai_cs_baset::placet &place,
+    const lock_typet &locks_acquired)
 {
 #ifdef DEBUG
   std::cout << "ADD LOCK at " << place << ": " << std::endl;
@@ -107,7 +107,7 @@ void lock_graph_cst::add_lock(const namespacet &ns,
     //ignore NULL objects (proper initialization should be checked by another analysis)
     if(value_sett::object_numbering[to_it->first].id()=="NULL-object")
       continue;
-    
+
     lock_typet lock_acquired;
     lock_acquired.insert(*to_it);
     unsigned to_node_index = -1;
@@ -120,7 +120,7 @@ void lock_graph_cst::add_lock(const namespacet &ns,
     (*this)[to_node_index].add(place);
 
     for(lock_typet::const_iterator from_it = locks_owned.begin();
-	from_it != locks_owned.end(); ++from_it)
+        from_it != locks_owned.end(); ++from_it)
     {
       //ignore NULL objects (proper initialization should be checked by another analysis)
       if(value_sett::object_numbering[from_it->first].id()=="NULL-object")
@@ -131,31 +131,31 @@ void lock_graph_cst::add_lock(const namespacet &ns,
 
       //suppress irrelevant self-loops; TODO: this should produce a warning becaause locks are used inconsistenly:         
       if(!lock_owned.is_top() &&
-         lock_owned == lock_acquired)
-	continue;
+          lock_owned == lock_acquired)
+        continue;
 
       unsigned from_node_index = -1;
       bool from_node_exists = has_node(lock_owned, from_node_index);
-//      assert(from_node_exists); //TODO: this should actually exist at this point
+      //      assert(from_node_exists); //TODO: this should actually exist at this point
       bool edge_exists = false;
       edge_indext edge_index = -1;
       if(!from_node_exists)
       {
-	from_node_index = add_node();
-	(*this)[from_node_index].set(lock_owned);
+        from_node_index = add_node();
+        (*this)[from_node_index].set(lock_owned);
       }
       else
       {
-	edge_exists = has_edge(from_node_index, to_node_index, 
-			       place, edge_index);
+        edge_exists = has_edge(from_node_index, to_node_index,
+            place, edge_index);
       }
 
       if(!edge_exists)
       {
-	edge_index = add_edge(from_node_index, to_node_index);
-	edges[edge_index].set(place);
+        edge_index = add_edge(from_node_index, to_node_index);
+        edges[edge_index].set(place);
       }
-      
+
       assert(edge(edge_index).place == place);
     }
   }

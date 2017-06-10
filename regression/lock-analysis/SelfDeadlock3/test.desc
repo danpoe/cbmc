@@ -4,6 +4,6 @@ main.c
 ^EXIT=0$
 ^SIGNAL=0$
 ^* potential deadlocks.*0$
-^* potential self deadlocks type3.*1$
+^* potential self deadlocks type2.*1$
 --
 ^warning: ignoring
