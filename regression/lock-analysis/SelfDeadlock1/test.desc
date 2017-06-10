@@ -1,0 +1,9 @@
+CORE
+main.c
+"--show-deadlocks --flow-insensitive-value-set-analysis --simple-dependency-analysis-ii --self-deadlocks"
+^EXIT=0$
+^SIGNAL=0$
+^* potential deadlocks.*0$
+^* potential self deadlock.*1$
+--
+^warning: ignoring
