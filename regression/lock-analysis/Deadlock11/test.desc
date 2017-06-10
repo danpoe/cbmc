@@ -3,6 +3,9 @@ main.c
 "--show-deadlocks --flow-insensitive-value-set-analysis --simple-dependency-analysis-ii"
 ^EXIT=0$
 ^SIGNAL=0$
+^* potential self deadlocks type1    0$
+^* potential self deadlocks type2    0$
+^* potential self deadlocks type3    0$
 ^* potential deadlocks    0$
 --
 ^warning: ignoring
