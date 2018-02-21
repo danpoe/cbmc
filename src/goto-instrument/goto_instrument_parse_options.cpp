@@ -49,18 +49,19 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <pointer-analysis/add_failed_symbols.h>
 #include <pointer-analysis/show_value_sets.h>
 
-#include <analyses/natural_loops.h>
-#include <analyses/global_may_alias.h>
-#include <analyses/local_bitvector_analysis.h>
-#include <analyses/custom_bitvector_analysis.h>
-#include <analyses/escape_analysis.h>
 #include <analyses/call_graph.h>
+#include <analyses/constant_propagator.h>
+#include <analyses/custom_bitvector_analysis.h>
+#include <analyses/dependence_graph.h>
+#include <analyses/escape_analysis.h>
+#include <analyses/global_may_alias.h>
 #include <analyses/interval_analysis.h>
 #include <analyses/interval_domain.h>
-#include <analyses/reaching_definitions.h>
-#include <analyses/dependence_graph.h>
-#include <analyses/constant_propagator.h>
 #include <analyses/is_threaded.h>
+#include <analyses/local_bitvector_analysis.h>
+#include <analyses/natural_loops.h>
+#include <analyses/reaching_definitions_with_sharing.h>
+#include <analyses/reaching_definitions_without_sharing.h>
 
 #include <cbmc/version.h>
 
@@ -443,9 +444,19 @@ int goto_instrument_parse_optionst::doit()
       do_indirect_call_and_rtti_removal();
 
       const namespacet ns(goto_model.symbol_table);
-      reaching_definitions_analysist rd_analysis(ns);
-      rd_analysis(goto_model);
-      rd_analysis.output(goto_model, std::cout);
+
+      if(cmdline.isset("sharing"))
+      {
+        reaching_definitions_with_sharing_analysist rd_analysis(ns);
+        rd_analysis(goto_model);
+        rd_analysis.output(goto_model, std::cout);
+      }
+      else
+      {
+        reaching_definitions_analysist rd_analysis(ns);
+        rd_analysis(goto_model);
+        rd_analysis.output(goto_model, std::cout);
+      }
 
       return CPROVER_EXIT_SUCCESS;
     }
@@ -1476,6 +1487,9 @@ void goto_instrument_parse_optionst::help()
     HELP_SHOW_CLASS_HIERARCHY
     // NOLINTNEXTLINE(whitespace/line_length)
     " --show-threaded              show instructions that may be executed by more than one thread\n"
+    " --show-reaching-definitions  show reaching definitions\n"
+    // NOLINTNEXTLINE(whitespace/line_length)
+    " --sharing                    enable sharing, use with --show-reaching-definitions\n"
     "\n"
     "Safety checks:\n"
     " --no-assertions              ignore user assertions\n"

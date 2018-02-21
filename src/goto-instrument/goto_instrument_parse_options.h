@@ -91,8 +91,8 @@ Author: Daniel Kroening, kroening@kroening.com
   OPT_FLUSH \
   "(splice-call):" \
   OPT_REMOVE_CALLS_NO_BODY \
-  OPT_REPLACE_FUNCTION_BODY
-
+  OPT_REPLACE_FUNCTION_BODY \
+  "(sharing)"
 // clang-format on
 
 class goto_instrument_parse_optionst:
