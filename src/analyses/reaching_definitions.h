@@ -155,24 +155,16 @@ public:
   typedef std::multimap<range_spect, range_spect> rangest;
   typedef std::map<locationt, rangest> ranges_at_loct;
 
-  const ranges_at_loct &get(const irep_idt &identifier) const;
+  virtual const ranges_at_loct &get(const irep_idt &identifier) const = 0;
   void clear_cache(const irep_idt &identifier) const
   {
-    export_cache[identifier].clear();
+    export_cache.erase(identifier);
   }
 
 protected:
   tvt has_values;
 
   sparse_bitvector_analysist<reaching_definitiont> *bv_container;
-
-  typedef std::set<std::size_t> values_innert;
-  #ifdef USE_DSTRING
-  typedef std::map<irep_idt, values_innert> valuest;
-  #else
-  typedef std::unordered_map<irep_idt, values_innert> valuest;
-  #endif
-  valuest values;
 
   #ifdef USE_DSTRING
   typedef std::map<irep_idt, ranges_at_loct> export_cachet;
@@ -182,8 +174,6 @@ protected:
   mutable export_cachet export_cache;
 
   virtual infot get_info(ai_baset &ai) = 0;
-
-  virtual void populate_cache(const irep_idt &identifier) const = 0;
 
   virtual void transform_dead(const namespacet &ns, locationt from) = 0;
 
