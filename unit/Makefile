@@ -113,3 +113,6 @@ unit_tests$(EXEEXT): $(OBJ)
 
 miniBDD$(EXEEXT): miniBDD$(OBJEXT) $(CPROVER_LIBS)
 	$(LINKBIN)
+
+util/sharing_map_perf$(EXEEXT): util/sharing_map_perf$(OBJEXT) $(CPROVER_LIBS)
+	$(LINKBIN)
