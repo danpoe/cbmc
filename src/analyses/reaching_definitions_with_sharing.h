@@ -138,7 +138,7 @@ private:
   values_innert &get_values_inner(const irep_idt &identifier) override;
 };
 
-typedef reaching_definitions_analysis_ait<rd_range_domain_with_sharingt<false>>
+typedef reaching_definitions_analysis_ait<rd_range_domain_with_sharingt<true>>
   reaching_definitions_with_sharing_analysist;
 
 #include "reaching_definitions_with_sharing.cpp"

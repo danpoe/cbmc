@@ -9,6 +9,13 @@ Date: February 2013
 
 \*******************************************************************/
 
+// Select merge type (see merge() below)
+// 0: merge `other` into `*this`
+// 1: merge `*this` into `other`
+#ifndef RD_MERGE_TYPE
+#define RD_MERGE_TYPE 1
+#endif
+
 template <bool remove_locals>
 infot rd_range_domain_with_sharingt<remove_locals>::get_info(ai_baset &ai)
 {
@@ -279,6 +286,75 @@ values_innert &rd_range_domain_with_sharingt<remove_locals>::get_values_inner(
   return r.first;
 }
 
+#if RD_MERGE_TYPE == 0
+/// \return returns true iff there is something new
+template <bool remove_locals>
+bool rd_range_domain_with_sharingt<remove_locals>::merge(
+  const rd_range_domain_with_sharingt &other,
+  locationt from,
+  locationt to)
+{
+  bool changed = false;
+
+  if(other.is_bottom())
+  {
+    return false;
+  }
+
+  if(is_bottom())
+  {
+    values = other.values;
+
+    INVARIANT(!other.is_top(), "top unused");
+    has_values = other.has_values;
+
+    return true;
+  }
+
+  typename valuest::delta_viewt delta_view;
+  other.values.get_delta_view(values, delta_view, false);
+
+  for(const auto &element : delta_view)
+  {
+    bool in_both = element.in_both;
+    const irep_idt &k = element.k;
+    const values_innert &inner_other = element.m; // in other
+    const values_innert &inner = element.other_m; // in this
+
+    if(!in_both)
+    {
+      values.insert(k, inner_other);
+      changed = true;
+    }
+    else
+    {
+      bool inner_is_superset = true;
+      for(const auto &item : inner_other)
+      {
+        if(inner.find(item) == inner.end())
+        {
+          inner_is_superset = false;
+          break;
+        }
+      }
+
+      if(!inner_is_superset)
+      {
+        auto &v = values.find(k);
+        INVARIANT(v.second, "key exists as in_both is true");
+
+        values_innert &inner = v.first;
+        inner.insert(inner_other.begin(), inner_other.end());
+        changed = true;
+      }
+    }
+  }
+
+  return changed;
+}
+#endif
+
+#if RD_MERGE_TYPE == 1
 /// \return returns true iff there is something new
 template <bool remove_locals>
 bool rd_range_domain_with_sharingt<remove_locals>::merge(
@@ -307,8 +383,23 @@ bool rd_range_domain_with_sharingt<remove_locals>::merge(
     const_cast<rd_range_domain_with_sharingt &>(other);
   values.swap(o.values);
 
+  {
+    // Needed to set changed
+    typename valuest::delta_viewt delta_view_test;
+    values.get_delta_view(o.values, delta_view_test, false);
+
+    for(const auto &element : delta_view_test)
+    {
+      if(!element.in_both)
+      {
+        changed = true;
+        break;
+      }
+    }
+  }
+
   typename valuest::delta_viewt delta_view;
-  o.values.get_delta_view(values, delta_view);
+  o.values.get_delta_view(values, delta_view, false);
 
   for(const auto &element : delta_view)
   {
@@ -320,20 +411,35 @@ bool rd_range_domain_with_sharingt<remove_locals>::merge(
     if(!in_both)
     {
       values.insert(k, inner_other);
-      changed = true;
     }
     else
     {
-      if(inner != inner_other)
+      bool inner_is_superset = true;
+      for(const auto &item : inner_other)
+      {
+        if(inner.find(item) == inner.end())
+        {
+          inner_is_superset = false;
+          break;
+        }
+      }
+
+      if(!inner_is_superset)
       {
         auto &v = values.find(k);
         INVARIANT(v.second, "key exists as in_both is true");
 
         values_innert &inner = v.first;
+        const values_innert copy(inner_other);
 
-        size_t n = inner.size();
         inner.insert(inner_other.begin(), inner_other.end());
-        if(inner.size() != n)
+
+        if(inner != copy)
+          changed = true;
+      }
+      else
+      {
+        if(inner != inner_other)
           changed = true;
       }
     }
@@ -341,6 +447,7 @@ bool rd_range_domain_with_sharingt<remove_locals>::merge(
 
   return changed;
 }
+#endif
 
 /// \return returns true iff there is something new
 template <bool remove_locals>
