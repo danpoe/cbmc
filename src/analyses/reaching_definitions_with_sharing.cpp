@@ -256,10 +256,15 @@ void rd_range_domain_with_sharingt<remove_locals>::output(
   typename valuest::viewt view;
   values.get_view(view);
 
-  for(const auto &value : view)
+  std::set<irep_idt> ids;
+  for(const auto &pair : view)
   {
-    const irep_idt &identifier = value.first;
-    output(identifier, out);
+    ids.insert(pair.first);
+  }
+
+  for(const irep_idt &id : ids)
+  {
+    output(id, out);
   }
 }
 

@@ -154,7 +154,7 @@ public:
   }
 
   // each element x represents a range of bits [x.first, x.second)
-  typedef std::multimap<range_spect, range_spect> rangest;
+  typedef std::set<std::pair<range_spect, range_spect>> rangest;
   typedef std::map<locationt, rangest> ranges_at_loct;
 
   virtual const ranges_at_loct &get(const irep_idt &identifier) const = 0;
