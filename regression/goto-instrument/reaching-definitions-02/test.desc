@@ -1,0 +1,29 @@
+CORE
+main.c
+--show-reaching-definitions --sharing
+activate-multi-line-match
+(Reaching definitions:\n)([^/]*\n)+(\s+x\[[^;]+;[^;]+\])([^/]*\n)+(\s+//.*\n)(\s+i = 0)
+^EXIT=0$
+^SIGNAL=0$
+--
+--
+The regex above checks that the reaching definitions computed at the statement
+"i = 0" include two different definitions of x.
+
+The regex above matches the following output:
+
+Reaching definitions:
+  func::1::i[0:32@10]
+  x[0:32@3;0:32@30]
+  __CPROVER_malloc_object[0:64@22]
+  __CPROVER_dead_object[0:64@19]
+  __CPROVER_deallocated[0:64@20]
+  __CPROVER_malloc_size[0:64@23]
+  __CPROVER_malloc_is_new_array[0:1@21]
+  __CPROVER_memory_leak[0:64@24]
+  __CPROVER_threads_exited[0:-1@29]
+  __CPROVER_pipe_count[0:32@26]
+  __CPROVER_next_thread_id[0:64@25]
+
+        // 11 file main.c line 5 function func
+        i = 0;
