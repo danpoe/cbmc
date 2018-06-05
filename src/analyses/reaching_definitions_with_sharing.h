@@ -137,6 +137,7 @@ private:
   void output(std::ostream &out) const override;
 
   values_innert &get_values_inner(const irep_idt &identifier) override;
+  const values_innert &get_values_inner(const irep_idt &identifier) const override;
 };
 
 typedef reaching_definitions_analysis_ait<rd_range_domain_with_sharingt<true>>

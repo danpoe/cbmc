@@ -307,6 +307,17 @@ values_innert &rd_range_domain_with_sharingt<remove_locals>::get_values_inner(
   return r.first;
 }
 
+template <bool remove_locals>
+const values_innert &rd_range_domain_with_sharingt<remove_locals>::get_values_inner(
+  const irep_idt &identifier) const
+{
+  auto &r = values.find(identifier);
+  if(!r.second)
+    return values_inner_empty;
+
+  return r.first;
+}
+
 #if RD_MERGE_TYPE == 0
 /// \return returns true iff there is something new
 template <bool remove_locals>

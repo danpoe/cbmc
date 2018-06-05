@@ -9,6 +9,8 @@ Date: February 2013
 
 \*******************************************************************/
 
+#include <util/sharing_map.h>
+
 template <bool remove_locals>
 void rd_range_domain_baset<remove_locals>::transform(
   locationt from,
@@ -162,7 +164,9 @@ void rd_range_domain_baset<remove_locals>::kill(
 
   PRECONDITION(range_end > range_start);
 
-  values_innert &current_values = get_values_inner(identifier);
+  // copy
+  values_innert current_values = as_const(this)->get_values_inner(identifier);
+  values_innert copy(current_values);
   values_innert new_values;
 
   for(typename values_innert::iterator it = current_values.begin();
@@ -212,6 +216,12 @@ void rd_range_domain_baset<remove_locals>::kill(
   }
 
   current_values.insert(new_values.begin(), new_values.end());
+
+  if(current_values != copy)
+  {
+    values_innert &values = get_values_inner(identifier);
+    values = current_values;
+  }
 }
 
 template <bool remove_locals>

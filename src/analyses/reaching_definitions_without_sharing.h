@@ -139,6 +139,7 @@ private:
   void output(std::ostream &out) const override;
 
   values_innert &get_values_inner(const irep_idt &identifier) override;
+  const values_innert &get_values_inner(const irep_idt &identifier) const override;
 
   bool merge_inner(values_innert &dest, const values_innert &other);
 };

@@ -331,6 +331,18 @@ rd_range_domain_without_sharingt<remove_locals>::get_values_inner(
   return entry->second;
 }
 
+template <bool remove_locals>
+const values_innert &
+rd_range_domain_without_sharingt<remove_locals>::get_values_inner(
+  const irep_idt &identifier) const
+{
+  typename valuest::const_iterator entry = values.find(identifier);
+  if(entry == values.end())
+    return values_inner_empty;
+
+  return entry->second;
+}
+
 /// \return returns true iff there is something new
 template <bool remove_locals>
 bool rd_range_domain_without_sharingt<remove_locals>::merge_inner(

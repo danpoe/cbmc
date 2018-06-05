@@ -219,6 +219,7 @@ protected:
   void output(const irep_idt &identifier, std::ostream &out) const;
 
   virtual values_innert &get_values_inner(const irep_idt &identifier) = 0;
+  virtual const values_innert &get_values_inner(const irep_idt &identifier) const = 0;
 };
 
 template <typename rd_range_domain>
