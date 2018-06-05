@@ -20,7 +20,7 @@ Date: August 2013
 
 #include "ai.h"
 #include "cfg_dominators.h"
-#include "reaching_definitions_without_sharing.h"
+#include "reaching_definitions_with_sharing.h"
 
 class dependence_grapht;
 
@@ -264,7 +264,7 @@ public:
     return post_dominators;
   }
 
-  const reaching_definitions_analysist &reaching_definitions() const
+  const reaching_definitions_analysis_ait<rd_range_domain_with_sharingt<true>> &reaching_definitions() const
   {
     return rd;
   }
@@ -288,7 +288,7 @@ protected:
   const namespacet &ns;
 
   post_dominators_mapt post_dominators;
-  reaching_definitions_analysist rd;
+  reaching_definitions_analysis_ait<rd_range_domain_with_sharingt<true>> rd;
 };
 
 #endif // CPROVER_ANALYSES_DEPENDENCE_GRAPH_H
