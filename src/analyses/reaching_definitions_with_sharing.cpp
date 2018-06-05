@@ -244,9 +244,27 @@ bool rd_range_domain_with_sharingt<remove_locals>::gen(
 
   size_t id = bv_container->add(v);
 
-  const auto &r = values[identifier].insert(id);
-  if(!r.second)
-    return false;
+  if(!values.has_key(identifier))
+  {
+    values[identifier].insert(id);
+  }
+  else
+  {
+    {
+      const auto &r = as_const(&values)->find(identifier);
+      INVARIANT(r.second, "");
+      auto &set = r.first;
+      if(set.find(id) != set.end())
+        return false;
+    }
+
+    {
+      const auto &r = values.find(identifier, tvt(true));
+      INVARIANT(r.second, "");
+      auto &set = r.first;
+      set.insert(id);
+    }
+  }
 
   return true;
 }
