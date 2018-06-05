@@ -31,6 +31,7 @@ Date: February 2013
 #include <analyses/is_threaded.h>
 
 #include <memory>
+#include <algorithm>
 
 #include "reaching_definitions.h"
 

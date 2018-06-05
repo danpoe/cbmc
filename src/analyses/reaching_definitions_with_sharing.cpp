@@ -9,11 +9,14 @@ Date: February 2013
 
 \*******************************************************************/
 
+#include <iostream>
+
 // Select merge type (see merge() below)
 // 0: merge `other` into `*this`
 // 1: merge `*this` into `other`
+// 2: dynamically choose between 0 or 1
 #ifndef RD_MERGE_TYPE
-#define RD_MERGE_TYPE 1
+#define RD_MERGE_TYPE 2
 #endif
 
 template <bool remove_locals>
@@ -414,15 +417,8 @@ bool rd_range_domain_with_sharingt<remove_locals>::merge(
     }
     else
     {
-      bool inner_is_superset = true;
-      for(const auto &item : inner_other)
-      {
-        if(inner.find(item) == inner.end())
-        {
-          inner_is_superset = false;
-          break;
-        }
-      }
+      bool inner_is_superset = std::includes(
+        inner.begin(), inner.end(), inner_other.begin(), inner_other.end());
 
       if(!inner_is_superset)
       {
@@ -440,6 +436,177 @@ bool rd_range_domain_with_sharingt<remove_locals>::merge(
       else
       {
         if(inner != inner_other)
+          changed = true;
+      }
+    }
+  }
+
+  return changed;
+}
+#endif
+
+#if RD_MERGE_TYPE == 2
+/// \return returns true iff there is something new
+template <bool remove_locals>
+bool rd_range_domain_with_sharingt<remove_locals>::merge(
+  const rd_range_domain_with_sharingt &other,
+  locationt from,
+  locationt to)
+{
+  // Handle bottom cases first
+
+  if(other.is_bottom())
+  {
+    return false;
+  }
+
+  if(is_bottom())
+  {
+    values = other.values;
+
+    INVARIANT(!other.is_top(), "top unused");
+    has_values = other.has_values;
+
+    return true;
+  }
+
+  INVARIANT(!is_bottom(), "");
+  INVARIANT(!is_top(), "");
+
+  // Determine merge direction
+
+  bool merge_into_this;
+
+  {
+    typename valuest::delta_viewt delta_view;
+    values.get_delta_view(other.values, delta_view, true);
+
+    std::size_t score = 0;
+    std::size_t score_other = 0;
+
+    for(const auto &item : delta_view)
+    {
+      bool b;
+
+      b = std::includes(
+        item.m.begin(), item.m.end(), item.other_m.begin(), item.other_m.end());
+
+      if(b)
+      {
+        score++;
+        continue;
+      }
+
+      b = std::includes(
+        item.other_m.begin(), item.other_m.end(), item.m.begin(), item.m.end());
+
+      if(b)
+      {
+        score_other++;
+      }
+    }
+
+    // Check for extra keys
+
+    delta_view.clear();
+    values.get_delta_view(other.values, delta_view, false);
+
+    for(const auto &item : delta_view)
+    {
+      if(!item.in_both)
+      {
+        score++;
+      }
+    }
+
+    delta_view.clear();
+    other.values.get_delta_view(values, delta_view, false);
+
+    for(const auto &item : delta_view)
+    {
+      if(!item.in_both)
+      {
+        score_other++;
+      }
+    }
+
+    merge_into_this = score >= score_other;
+
+#ifdef RD_MERGE_STATS
+    static std::size_t merge_stat_this = 0;
+    static std::size_t merge_stat_other = 0;
+
+    merge_stat_this += merge_into_this;
+    merge_stat_other += !merge_into_this;
+
+    std::cout << "Merge into this: " << merge_stat_this << std::endl;
+    std::cout << "Merge into other: " << merge_stat_other << std::endl;
+#endif
+  }
+
+  // Now do the merge
+
+  bool changed = false;
+
+  if(!merge_into_this)
+  {
+    rd_range_domain_with_sharingt &o =
+      const_cast<rd_range_domain_with_sharingt &>(other);
+    values.swap(o.values);
+
+    // Needed to set changed
+    typename valuest::delta_viewt delta_view;
+    values.get_delta_view(other.values, delta_view, false);
+
+    for(const auto &item : delta_view)
+    {
+      if(!item.in_both)
+      {
+        changed = true;
+        break;
+      }
+    }
+  }
+
+  typename valuest::delta_viewt delta_view;
+  other.values.get_delta_view(values, delta_view, false);
+
+  for(const auto &element : delta_view)
+  {
+    bool in_both = element.in_both;
+    const irep_idt &k = element.k;
+    const values_innert &inner_other = element.m; // in other
+    const values_innert &inner = element.other_m; // in this
+
+    if(!in_both)
+    {
+      values.insert(k, inner_other);
+
+      if(merge_into_this)
+        changed = true;
+    }
+    else
+    {
+      bool inner_is_superset = std::includes(
+        inner.begin(), inner.end(), inner_other.begin(), inner_other.end());
+
+      if(!inner_is_superset)
+      {
+        auto &v = values.find(k);
+        INVARIANT(v.second, "key exists as in_both is true");
+
+        values_innert &inner = v.first;
+
+        inner.insert(inner_other.begin(), inner_other.end());
+
+        if(merge_into_this || inner != inner_other)
+        {
+          changed = true;
+        }
+      }
+      else
+      {
+        if(!merge_into_this && inner != inner_other)
           changed = true;
       }
     }
