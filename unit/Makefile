@@ -156,7 +156,12 @@ CLEANFILES = $(CATCH_TEST) testing-utils/testing-utils$(LIBEXT)
 # would cause unnecessary rebuilds
 $(filter %$(LIBEXT), $(CPROVER_LIBS)): cprover.dir
 
+<<<<<<< HEAD
 all: $(CATCH_TEST)
+=======
+CLEANFILES = $(TESTS)\
+        #Empty last line
+>>>>>>> cf37266... Add Makefiles enabeling memory-analyzer and tests
 
 clean: testing-utils-clean
 
