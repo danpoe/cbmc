@@ -235,6 +235,7 @@ exprt symbol_analyzert::declare_and_initalize_char_ptr(
 
     code_declt target_object =
       declare_instance(id2string(symbol.get_identifier()), init.type());
+
     target_object.operands().resize(2);
     target_object.op1() = init;
     generated_code.add(target_object);
