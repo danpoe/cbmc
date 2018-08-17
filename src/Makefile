@@ -18,7 +18,6 @@ DIRS = analyses \
        langapi \
        linking \
        memory-analyzer \
-       memory-models \
        pointer-analysis \
        solvers \
        util \
