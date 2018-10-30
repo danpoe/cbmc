@@ -10,6 +10,8 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <fstream>
 
+#include <util/object_factory_parameters.h>
+
 #include "language.h"
 
 language_filet::language_filet(const language_filet &rhs):
@@ -169,14 +171,19 @@ bool language_filest::generate_support_functions(
 
   for(auto &file : file_map)
   {
-    if(languages.insert(file.second.language->id()).second)
-      if(file.second.language->generate_support_functions(symbol_table))
+    auto &language = *file.second.language;
+
+    if(languages.insert(language.id()).second)
+    {
+      bool error = language.generate_support_functions(symbol_table);
+
+      if(error)
         return true;
+    }
   }
 
   return false;
 }
-
 bool language_filest::final(symbol_table_baset &symbol_table)
 {
   std::set<std::string> languages;
