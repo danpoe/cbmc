@@ -932,7 +932,17 @@ void cbmc_parse_optionst::help()
     " --max-nondet-tree-depth N    limit size of nondet (e.g. input) object tree;\n" /* NOLINT(*) */ \
     "                              at level N pointers are set to null\n" /* NOLINT(*) */ \
     " --min-null-tree-depth N      minimum level at which a pointer can first be\n" /* NOLINT(*) */ \
+    " --pointers-to-treat-as-array <identifier,...>  Comma separated list of identifiers that should be initialized" \
+    "                               as arrays" \
     "                              NULL in a recursively nondet initialized struct\n" /* NOLINT(*) */ \
+    " --associated-array-sizes <identifier:identifier...>"
+    "                               comma separated list of colon separated pairs\n"
+    "                               of identifiers; The first should be the name\n"
+    "                               of an array pointer \n"
+    "                               (see --pointers-to-treat-as-array)\n"
+    "                               , the second an integer parameter that\n"
+    "                               should hold its size\n"
+    " --max-dynamic-array-size <size>  max size for dynamically allocated arrays\n"
     HELP_FUNCTIONS
     "\n"
     "Program representations:\n"
