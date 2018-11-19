@@ -74,20 +74,10 @@ Author: Daniel Kroening, kroening@kroening.com
 #include "java_bytecode_language.h"
 #include "select_pointer_type.h"
 
+#include <util/allocate_objects.h>
 #include <util/message.h>
 #include <util/std_code.h>
 #include <util/symbol_table.h>
-
-/// Selects the kind of allocation used by the object factories
-enum class allocation_typet
-{
-  /// Allocate global objects
-  GLOBAL,
-  /// Allocate local stacked objects
-  LOCAL,
-  /// Allocate dynamic objects (using MALLOC)
-  DYNAMIC
-};
 
 exprt object_factory(
   const typet &type,
@@ -135,22 +125,5 @@ void gen_nondet_init(
   allocation_typet alloc_type,
   const java_object_factory_parameterst &object_factory_parameters,
   update_in_placet update_in_place);
-
-exprt allocate_dynamic_object(
-  const exprt &target_expr,
-  const typet &allocate_type,
-  symbol_table_baset &symbol_table,
-  const source_locationt &loc,
-  const irep_idt &function_id,
-  code_blockt &output_code,
-  std::vector<const symbolt *> &symbols_created,
-  bool cast_needed = false);
-
-exprt allocate_dynamic_object_with_decl(
-  const exprt &target_expr,
-  symbol_table_baset &symbol_table,
-  const source_locationt &loc,
-  const irep_idt &function_id,
-  code_blockt &output_code);
 
 #endif // CPROVER_JAVA_BYTECODE_JAVA_OBJECT_FACTORY_H
