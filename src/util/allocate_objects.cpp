@@ -80,12 +80,9 @@ exprt allocate_objectst::allocate_non_dynamic_object(
   aux_symbol.is_static_lifetime = static_lifetime;
   symbols_created.push_back(&aux_symbol);
 
-  exprt aoe = address_of_exprt(aux_symbol.symbol_expr());
-
-  if(!base_type_eq(allocate_type, target_expr.type().subtype(), ns))
-  {
-    aoe = typecast_exprt(aoe, target_expr.type());
-  }
+  exprt aoe = typecast_exprt::conditional_cast(
+    address_of_exprt(aux_symbol.symbol_expr()),
+    target_expr.type());
 
   code_assignt code(target_expr, aoe);
   code.add_source_location() = source_location;
@@ -140,13 +137,9 @@ exprt allocate_objectst::allocate_dynamic_object(
     assign.add_source_location() = source_location;
     output_code.add(assign);
 
-    exprt malloc_symbol_expr = malloc_sym.symbol_expr();
-
-    if(!base_type_eq(allocate_type, target_expr.type().subtype(), ns))
-    {
-      malloc_symbol_expr =
-        typecast_exprt(malloc_symbol_expr, target_expr.type());
-    }
+    exprt malloc_symbol_expr = typecast_exprt::conditional_cast(
+      malloc_sym.symbol_expr(),
+      target_expr.type());
 
     code_assignt code(target_expr, malloc_symbol_expr);
     code.add_source_location() = source_location;
