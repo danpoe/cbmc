@@ -23,5 +23,7 @@ if [ -e "${name}-mod.gb" ] ; then
   rm -f "${name}-mod.gb"
 fi
 
-$goto_harness "${name}.gb" "${name}-mod.gb" --harness-function-name $entry_point ${args} 
+$cbmc --show-goto-functions "${name}.gb"
+$goto_harness "${name}.gb" "${name}-mod.gb" --harness-function-name $entry_point ${args}
+$cbmc --show-goto-functions "${name}-mod.gb"
 $cbmc --function $entry_point "${name}-mod.gb"
