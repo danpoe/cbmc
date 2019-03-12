@@ -33,7 +33,7 @@ protected:
     const std::string &option,
     const std::list<std::string> &values) override;
 
-  void validate_options() override;
+  void validate_options(const goto_modelt &goto_model) override;
 
 private:
   struct implt;

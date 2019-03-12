@@ -125,7 +125,8 @@ void function_call_harness_generatort::generate(
   body.add(goto_programt::make_end_function());
 }
 
-void function_call_harness_generatort::validate_options()
+void function_call_harness_generatort::validate_options(
+  const goto_modelt &goto_model)
 {
   if(p_impl->function == ID_empty)
     throw invalid_command_line_argument_exceptiont{
