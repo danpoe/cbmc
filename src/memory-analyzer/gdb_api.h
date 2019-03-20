@@ -33,6 +33,7 @@ Author: Malte Mues <mail.mues@gmail.com>
 
 #include <util/exception_utils.h>
 
+/// Interface for running and querying GDB
 class gdb_apit
 {
 public:
