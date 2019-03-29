@@ -113,16 +113,25 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
     endif()
 endif()
 
+function(cprover_default_properties)
+    set(CBMC_CXX_STANDARD 11)
+    set(CBMC_CXX_STANDARD_REQUIRED true)
+    set(CBMC_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY
+            "Developer ID Application: Daniel Kroening")
+
+    set_target_properties(
+      ${ARGN}
+     PROPERTIES
+     CXX_STANDARD ${CBMC_CXX_STANDARD}
+     CXX_STANDARD_REQUIRED ${CBMC_CXX_STANDARD_REQUIRED}
+     XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ${CBMC_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY})
+endfunction()
+
 add_subdirectory(src)
 add_subdirectory(regression)
 add_subdirectory(unit)
 
-set(CBMC_CXX_STANDARD 11)
-set(CBMC_CXX_STANDARD_REQUIRED true)
-set(CBMC_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY
-    "Developer ID Application: Daniel Kroening")
-
-set_target_properties(
+cprover_default_properties(
     analyses
     ansi-c
     assembler
@@ -155,13 +164,7 @@ set_target_properties(
     testing-utils
     unit
     util
-    xml
-
-    PROPERTIES
-    CXX_STANDARD ${CBMC_CXX_STANDARD}
-    CXX_STANDARD_REQUIRED ${CBMC_CXX_STANDARD_REQUIRED}
-    XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ${CBMC_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY}
-)
+    xml)
 
 option(WITH_JBMC "Build the JBMC Java front-end" ON)
 if(WITH_JBMC)
