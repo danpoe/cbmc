@@ -60,7 +60,7 @@ value_sett::find_entry(const value_sett::idt &id) const
   auto found = values.find(id);
   return found == values.end() ? nullptr : &found->second;
 }
-
+#if 0
 value_sett::entryt &value_sett::get_entry(const entryt &e, const typet &type)
 {
   irep_idt index;
@@ -74,6 +74,16 @@ value_sett::entryt &value_sett::get_entry(const entryt &e, const typet &type)
     values.insert(std::pair<idt, entryt>(index, e));
 
   return r.first->second;
+}
+#endif
+
+irep_idt value_sett::get_key(
+  const irep_idt &identifier,
+  const irep_idt &suffix,
+  const typet &type)
+{
+  return field_sensitive(identifier, type)
+    ? id2string(identifier) + suffix : identifier;
 }
 
 bool value_sett::insert(
@@ -1315,12 +1325,49 @@ void value_sett::assign_rec(
   {
     const irep_idt &identifier=to_symbol_expr(lhs).get_identifier();
 
+#if 0
     entryt &e = get_entry(entryt(identifier, suffix), lhs.type());
 
     if(add_to_sets)
       make_union(e.object_map, values_rhs);
     else
       e.object_map=values_rhs;
+#endif
+
+    const irep_idt &key = get_key(identifier, suffix, lhs.type());
+
+    const auto r_opt = values.find(key);
+
+    if(!r_opt)
+    {
+    	entryt entry(identifier, suffix);
+    	entry.object_map = values_rhs;
+
+      values.insert(key, entry);
+    }
+    else
+    {
+      const entryt &current_entry = r_opt->get();
+
+      if(add_to_sets)
+      {
+        entryt new_entry(current_entry);
+
+        const bool changed = make_union(new_entry.object_map, values_rhs);
+
+        if(changed)
+        {
+        	values.replace(key, new_entry);
+        }
+      }
+      else if(values_rhs != current_entry.object_map)
+      {
+      	entryt new_entry(identifier, suffix);
+      	new_entry.object_map = values_rhs;
+
+        values.replace(key, new_entry);
+      }
+    }
   }
   else if(lhs.id()==ID_dynamic_object)
   {
@@ -1331,9 +1378,35 @@ void value_sett::assign_rec(
       "value_set::dynamic_object"+
       std::to_string(dynamic_object.get_instance());
 
+#if 0
     entryt &e = get_entry(entryt(name, suffix), lhs.type());
 
     make_union(e.object_map, values_rhs);
+#endif
+
+    const irep_idt &key = get_key(name, suffix, lhs.type());
+
+    const auto r_opt = values.find(key);
+
+    if(!r_opt)
+    {
+    	entryt entry(name, suffix);
+    	entry.object_map = values_rhs;
+
+    	values.insert(key, entry);
+    }
+    else
+    {
+      const entryt &current_entry = r_opt->get();
+      entryt new_entry(current_entry);
+
+      const bool changed = make_union(new_entry.object_map, values_rhs);
+
+      if(changed)
+      {
+      	values.replace(key, new_entry);
+      }
+    }
   }
   else if(lhs.id()==ID_dereference)
   {
@@ -1639,7 +1712,7 @@ void value_sett::guard(
     assign(expr.op0(), address_of, ns, false, false);
   }
 }
-
+#if 0
 void value_sett::erase_values_from_entry(
   entryt &entry,
   const std::unordered_set<exprt, irep_hash> &values_to_erase)
@@ -1665,3 +1738,4 @@ void value_sett::erase_values_from_entry(
     entry.object_map.write().erase(key_to_erase);
   }
 }
+#endif

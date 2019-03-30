@@ -334,7 +334,7 @@ public:
 
   /// Const version of \ref find_entry
   const entryt *find_entry(const idt &id) const;
-
+#if 0
   /// Gets or inserts an entry in this value-set.
   /// \param e: entry to find. Its `id` and `suffix` fields will be used
   ///   to find a corresponding entry; if a fresh entry is created its
@@ -345,6 +345,12 @@ public:
   ///   suffix should be used to find a field-sensitive value-set or whether
   ///   a single entry should be shared by all of symbol `e.identifier`.
   entryt &get_entry(const entryt &e, const typet &type);
+#endif
+
+  irep_idt get_key(
+    const irep_idt &identifier,
+    const irep_idt &suffix,
+    const typet &type);
 
   /// Pretty-print this value-set
   /// \param ns: global namespace
@@ -498,11 +504,11 @@ public:
     const typet &type,
     const std::string &suffix,
     const namespacet &ns) const;
-
+#if 0
   void erase_values_from_entry(
     entryt &entry,
     const std::unordered_set<exprt, irep_hash> &values_to_erase);
-
+#endif
 protected:
   /// Reads the set of objects pointed to by `expr`, including making
   /// recursive lookups for dereference operations etc.
