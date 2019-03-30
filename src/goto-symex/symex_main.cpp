@@ -676,10 +676,28 @@ void goto_symext::try_filter_value_sets(
   }
   if(jump_taken_value_set && !erase_from_jump_taken_value_set.empty())
   {
+#if 0
     value_sett::entryt *entry = jump_taken_value_set->get_entry_for_symbol(
       symbol_expr->get_identifier(), symbol_type, "", ns);
     jump_taken_value_set->erase_values_from_entry(
       *entry, erase_from_jump_taken_value_set);
+#endif
+
+#if 0
+    const value_sett::entryt *entry = jump_taken_value_set->get_entry_for_symbol(
+      symbol_expr->get_identifier(), symbol_type, "", ns);
+
+    for(const exprt &expr : erase_from_jump_taken_value_set)
+    {
+      const auto n = value_sett::object_numbering.get_number(expr);
+
+      if(entry->object_map.read().find(n) == "end")
+      {
+
+      }
+
+    }
+#endif
   }
   if(jump_not_taken_value_set && !erase_from_jump_not_taken_value_set.empty())
   {
