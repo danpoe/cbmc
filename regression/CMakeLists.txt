@@ -50,3 +50,7 @@ add_subdirectory(goto-cc-goto-analyzer)
 add_subdirectory(systemc)
 add_subdirectory(contracts)
 add_subdirectory(goto-harness)
+
+if(WITH_MEMORY_ANALYZER)
+add_subdirectory(memory-analyzer)
+endif()

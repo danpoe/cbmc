@@ -31,7 +31,9 @@ DIRS = cbmc \
 .PHONY: test
 test:
 	@for dir in $(DIRS); do \
+	  if [ "$$dir" != memory-analyzer -o "$WITH_MEMORY_ANALYZER" = 1 ]; then \
 		$(MAKE) "$$dir" || exit 1; \
+	  fi \
 	done;
 
 # Pattern to execute a single test suite directory

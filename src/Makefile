@@ -24,14 +24,20 @@ DIRS = analyses \
        xmllang \
        # Empty last line
 
-all: cbmc.dir \
-     goto-analyzer.dir \
-     goto-cc.dir \
-     goto-diff.dir \
-     goto-instrument.dir \
-     goto-harness.dir \
-     memory-analyzer.dir \
-     # Empty last line
+ALLDEPS = cbmc.dir \
+          goto-analyzer.dir \
+          goto-cc.dir \
+          goto-diff.dir \
+          goto-instrument.dir \
+          goto-harness.dir \
+          # Empty last line
+
+
+ifeq ($(WITH_MEMORY_ANALYZER),1)
+  ALLDEPS += memory-analyzer.dir
+endif
+
+all: $(ALLDEPS)
 
 ###############################################################################
 
