@@ -118,6 +118,9 @@ function(cprover_default_properties)
      XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ${CBMC_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY})
 endfunction()
 
+option(WITH_MEMORY_ANALYZER OFF
+  "build the memory analyzer")
+
 add_subdirectory(src)
 add_subdirectory(regression)
 add_subdirectory(unit)
@@ -148,8 +151,6 @@ cprover_default_properties(
     json-symtab-language
     langapi
     linking
-    memory-analyzer
-    memory-analyzer-lib
     pointer-analysis
     solvers
     testing-utils

@@ -32,7 +32,6 @@ SRC += analyses/ai/ai.cpp \
        interpreter/interpreter.cpp \
        json/json_parser.cpp \
        json_symbol_table.cpp \
-       memory-analyzer/gdb_api.cpp \
        path_strategies.cpp \
        pointer-analysis/value_set.cpp \
        solvers/bdd/miniBDD/miniBDD.cpp \
@@ -82,6 +81,10 @@ SRC += analyses/ai/ai.cpp \
        util/symbol.cpp \
        util/unicode.cpp \
        # Empty last line
+
+ifeq ($(WITH_MEMORY_ANALYZER),1)
+  SRC += memory-analyzer/gdb_api.cpp
+endif
 
 INCLUDES= -I ../src/ -I.
 

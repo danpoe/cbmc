@@ -104,4 +104,7 @@ add_subdirectory(goto-instrument)
 add_subdirectory(goto-analyzer)
 add_subdirectory(goto-diff)
 add_subdirectory(goto-harness)
+
+if(WITH_MEMORY_ANALYZER)
 add_subdirectory(memory-analyzer)
+endif()
