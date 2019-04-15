@@ -31,10 +31,10 @@ class exprt;
 class source_locationt;
 
 /// Interface for extracting values from GDB (building on \ref gdb_apit)
-class symbol_analyzert
+class gdb_value_extractort
 {
 public:
-  symbol_analyzert(const symbol_tablet &symbol_table, gdb_apit &gdb_api);
+  gdb_value_extractort(const symbol_tablet &symbol_table, const char *binary);
 
   /// For each input symbol in \p symbols: map its value address to its
   ///   \ref symbol_exprt (via the `values` map) and then call
@@ -55,9 +55,23 @@ public:
   symbol_tablet get_snapshot_as_symbol_table();
 
   using pointer_valuet = gdb_apit::pointer_valuet;
+  using memory_addresst = gdb_apit::memory_addresst;
+
+  void create_gdb_process()
+  {
+    gdb_api.create_gdb_process();
+  }
+  bool run_gdb_to_breakpoint(const std::string &breakpoint)
+  {
+    return gdb_api.run_gdb_to_breakpoint(breakpoint);
+  }
+  void run_gdb_from_core(const std::string &corefile)
+  {
+    gdb_api.run_gdb_from_core(corefile);
+  }
 
 private:
-  gdb_apit &gdb_api;
+  gdb_apit gdb_api;
 
   /// External symbol table -- extracted from \ref read_goto_binary
   /// We only expect to analyse symbols located there.
@@ -69,19 +83,19 @@ private:
   /// Sequence of assignments collected during \ref analyze_symbols
   std::vector<std::pair<exprt, exprt>> assignments;
 
-  /// Mapping memory location (from \ref gdb_apit) to pointer expression for
-  ///   which \ref get_non_char_pointer_value returned nil expression.
-  std::map<exprt, std::string> outstanding_assignments;
+  /// Mapping pointer expression for which \ref get_non_char_pointer_value
+  ///   returned nil expression to memory location (from \ref gdb_apit).
+  std::map<exprt, memory_addresst> outstanding_assignments;
 
   /// Storing pairs <address, symbol> such that at `address` is stored the
   ///   value of `symbol`.
-  std::map<std::string, exprt> values;
+  std::map<memory_addresst, exprt> values;
 
   /// Assign the gdb-extracted value for \p symbol_name to its symbol
   ///   expression and then process outstanding assignments that this
   ///   extraction introduced.
   /// \param symbol_name: symbol table name to be analysed
-  void analyze_symbol(const std::string &symbol_name);
+  void analyze_symbol(const irep_idt &symbol_name);
 
   /// Create assignment \p lhs := \p value (see \ref analyze_symbol)
   /// \param lhs: the left-hand side of the assignment; expected to be a
@@ -145,7 +159,7 @@ private:
   /// \return symbol expression associated with \p memory_location
   exprt get_non_char_pointer_value(
     const exprt &expr,
-    const std::string memory_location,
+    const memory_addresst &memory_location,
     const source_locationt &location);
 
   /// If \p memory_location is found among \ref values then return the symbol
@@ -160,11 +174,16 @@ private:
   /// \return symbol expression associated with \p memory_location
   exprt get_char_pointer_value(
     const exprt &expr,
-    const std::string &memory_location,
+    const memory_addresst &memory_location,
     const source_locationt &location);
 
   /// Call \ref add_assignment for each pair in \ref outstanding_assignments
   void process_outstanding_assignments();
+
+  /// Extract a stringified value from and c-converted \p expr
+  /// \param expr: expression to be extracted
+  /// \return the value as a string
+  std::string get_gdb_value(const exprt &expr);
 };
 
 #endif // CPROVER_MEMORY_ANALYZER_ANALYZE_SYMBOL_H
