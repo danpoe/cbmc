@@ -9,32 +9,16 @@ Author: Malte Mues <mail.mues@gmail.com>
 
 #include "analyze_symbol.h"
 
-#include <algorithm>
-#include <regex>
-
-#include <iostream>
-
-#include <goto-programs/goto_model.h>
-#include <goto-programs/read_goto_binary.h>
-
-#include <util/arith_tools.h>
 #include <util/c_types.h>
 #include <util/c_types_util.h>
 #include <util/config.h>
-#include <util/cout_message.h>
-#include <util/expr.h>
 #include <util/expr_initializer.h>
-#include <util/irep.h>
-#include <util/mp_arith.h>
-#include <util/std_code.h>
-#include <util/std_expr.h>
-#include <util/std_types.h>
 #include <util/string_constant.h>
 
-symbol_analyzert::symbol_analyzert(
+gdb_value_extractort::gdb_value_extractort(
   const symbol_tablet &symbol_table,
-  gdb_apit &gdb_api)
-  : gdb_api(gdb_api),
+  const char *binary)
+  : gdb_api(binary),
     symbol_table(symbol_table),
     ns(symbol_table),
     c_converter(ns, expr2c_configurationt::clean_configuration),
@@ -42,7 +26,8 @@ symbol_analyzert::symbol_analyzert(
 {
 }
 
-void symbol_analyzert::analyze_symbols(const std::vector<std::string> &symbols)
+void gdb_value_extractort::analyze_symbols(
+  const std::vector<std::string> &symbols)
 {
   // record addresses of given symbols
   for(const auto &id : symbols)
@@ -54,7 +39,7 @@ void symbol_analyzert::analyze_symbols(const std::vector<std::string> &symbols)
     const pointer_valuet &value = gdb_api.get_memory(c_expr);
     CHECK_RETURN(value.pointee.empty() || (value.pointee == id));
 
-    values.insert(std::make_pair(value.address, symbol_expr));
+    values.insert({value.address, symbol_expr});
   }
 
   for(const auto &id : symbols)
@@ -63,7 +48,7 @@ void symbol_analyzert::analyze_symbols(const std::vector<std::string> &symbols)
   }
 }
 
-void symbol_analyzert::analyze_symbol(const std::string &symbol_name)
+void gdb_value_extractort::analyze_symbol(const irep_idt &symbol_name)
 {
   const symbolt &symbol = ns.lookup(symbol_name);
   const symbol_exprt symbol_expr = symbol.symbol_expr();
@@ -89,7 +74,7 @@ void symbol_analyzert::analyze_symbol(const std::string &symbol_name)
 }
 
 /// Get memory snapshot as C code
-std::string symbol_analyzert::get_snapshot_as_c_code()
+std::string gdb_value_extractort::get_snapshot_as_c_code()
 {
   code_blockt generated_code;
 
@@ -104,7 +89,7 @@ std::string symbol_analyzert::get_snapshot_as_c_code()
 }
 
 /// Get memory snapshot as symbol table
-symbol_tablet symbol_analyzert::get_snapshot_as_symbol_table()
+symbol_tablet gdb_value_extractort::get_snapshot_as_symbol_table()
 {
   symbol_tablet snapshot;
 
@@ -137,19 +122,19 @@ symbol_tablet symbol_analyzert::get_snapshot_as_symbol_table()
   return snapshot;
 }
 
-void symbol_analyzert::add_assignment(const exprt &lhs, const exprt &value)
+void gdb_value_extractort::add_assignment(const exprt &lhs, const exprt &value)
 {
   assignments.push_back(std::make_pair(lhs, value));
 }
 
-exprt symbol_analyzert::get_char_pointer_value(
+exprt gdb_value_extractort::get_char_pointer_value(
   const exprt &expr,
-  const std::string &memory_location,
+  const memory_addresst &memory_location,
   const source_locationt &location)
 {
   PRECONDITION(expr.type().id() == ID_pointer);
-  PRECONDITION(is_c_char(expr.type().subtype()));
-  PRECONDITION(memory_location != "0x0");
+  PRECONDITION(is_c_char_type(expr.type().subtype()));
+  PRECONDITION(!memory_location.is_null());
 
   auto it = values.find(memory_location);
 
@@ -182,14 +167,14 @@ exprt symbol_analyzert::get_char_pointer_value(
   }
 }
 
-exprt symbol_analyzert::get_non_char_pointer_value(
+exprt gdb_value_extractort::get_non_char_pointer_value(
   const exprt &expr,
-  const std::string memory_location,
+  const memory_addresst &memory_location,
   const source_locationt &location)
 {
   PRECONDITION(expr.type().id() == ID_pointer);
-  PRECONDITION(!is_c_char(expr.type().subtype()));
-  PRECONDITION(memory_location != "0x0");
+  PRECONDITION(!is_c_char_type(expr.type().subtype()));
+  PRECONDITION(!memory_location.is_null());
 
   auto it = values.find(memory_location);
 
@@ -227,7 +212,7 @@ exprt symbol_analyzert::get_non_char_pointer_value(
   }
 }
 
-exprt symbol_analyzert::get_pointer_value(
+exprt gdb_value_extractort::get_pointer_value(
   const exprt &expr,
   const exprt &zero_expr,
   const source_locationt &location)
@@ -240,11 +225,11 @@ exprt symbol_analyzert::get_pointer_value(
   std::string c_expr = c_converter.convert(expr);
   const pointer_valuet value = gdb_api.get_memory(c_expr);
 
-  const std::string memory_location = value.address;
+  const auto memory_location = value.address;
 
-  if(memory_location != "0x0")
+  if(!memory_location.is_null())
   {
-    if(is_c_char(expr.type().subtype()))
+    if(is_c_char_type(expr.type().subtype()))
     {
       return get_char_pointer_value(expr, memory_location, location);
     }
@@ -267,7 +252,7 @@ exprt symbol_analyzert::get_pointer_value(
   return zero_expr;
 }
 
-exprt symbol_analyzert::get_array_value(
+exprt gdb_value_extractort::get_array_value(
   const exprt &expr,
   const exprt &array,
   const source_locationt &location)
@@ -291,7 +276,7 @@ exprt symbol_analyzert::get_array_value(
   return new_array;
 }
 
-exprt symbol_analyzert::get_expr_value(
+exprt gdb_value_extractort::get_expr_value(
   const exprt &expr,
   const exprt &zero_expr,
   const source_locationt &location)
@@ -300,18 +285,13 @@ exprt symbol_analyzert::get_expr_value(
 
   const typet &type = expr.type();
 
-  if(is_c_int_derivate(type))
+  if(is_c_integral_type(type))
   {
     INVARIANT(zero_expr.is_constant(), "zero initializer is a constant");
 
-    std::string c_expr = c_converter.convert(expr);
-    const std::string value = gdb_api.get_value(c_expr);
-
-    const mp_integer int_rep = string2integer(value);
-
-    return from_integer(int_rep, type);
+    return from_integer(string2integer(get_gdb_value(expr)), expr.type());
   }
-  else if(is_c_char(type))
+  else if(is_c_char_type(type))
   {
     INVARIANT(zero_expr.is_constant(), "zero initializer is a constant");
 
@@ -321,21 +301,16 @@ exprt symbol_analyzert::get_expr_value(
   {
     INVARIANT(zero_expr.is_constant(), "zero initializer is a constant");
 
-    std::string c_expr = c_converter.convert(expr);
-    const std::string value = gdb_api.get_value(c_expr);
-
-    return from_c_boolean_value(value, type);
+    return from_c_boolean_value(id2boolean(get_gdb_value(expr)), type);
   }
   else if(type.id() == ID_c_enum)
   {
     INVARIANT(zero_expr.is_constant(), "zero initializer is a constant");
 
-    std::string c_expr = c_converter.convert(expr);
-    const std::string value = gdb_api.get_value(c_expr);
-
-    return convert_member_name_to_enum_value(value, to_c_enum_type(type));
+    return convert_member_name_to_enum_value(
+      get_gdb_value(expr), to_c_enum_type(type));
   }
-  else if(type.id() == ID_struct_tag)
+  else if(type.id() == ID_struct || type.id() == ID_struct_tag)
   {
     return get_struct_value(expr, zero_expr, location);
   }
@@ -349,15 +324,10 @@ exprt symbol_analyzert::get_expr_value(
 
     return get_pointer_value(expr, zero_expr, location);
   }
-  else
-  {
-    throw analysis_exceptiont("unexpected expression:\n" + expr.pretty());
-  }
-
-  return zero_expr;
+  UNREACHABLE;
 }
 
-exprt symbol_analyzert::get_struct_value(
+exprt gdb_value_extractort::get_struct_value(
   const exprt &expr,
   const exprt &zero_expr,
   const source_locationt &location)
@@ -370,13 +340,13 @@ exprt symbol_analyzert::get_struct_value(
   exprt new_expr(zero_expr);
 
   const struct_tag_typet &struct_tag_type = to_struct_tag_type(expr.type());
-  const struct_typet struct_type = ns.follow_tag(struct_tag_type);
+  const struct_typet &struct_type = ns.follow_tag(struct_tag_type);
 
   for(size_t i = 0; i < new_expr.operands().size(); ++i)
   {
     const struct_typet::componentt &component = struct_type.components()[i];
 
-    if(component.get_is_padding())
+    if(component.get_is_padding() || component.type().id() == ID_code)
     {
       continue;
     }
@@ -390,11 +360,16 @@ exprt symbol_analyzert::get_struct_value(
   return new_expr;
 }
 
-void symbol_analyzert::process_outstanding_assignments()
+void gdb_value_extractort::process_outstanding_assignments()
 {
   for(const auto &pair : outstanding_assignments)
   {
     const address_of_exprt aoe(values[pair.second]);
     add_assignment(pair.first, aoe);
   }
+}
+
+std::string gdb_value_extractort::get_gdb_value(const exprt &expr)
+{
+  return gdb_api.get_value(c_converter.convert(expr));
 }

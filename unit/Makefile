@@ -147,9 +147,14 @@ CPROVER_LIBS =../src/ansi-c/ansi-c$(LIBEXT) \
 OBJ += $(CPROVER_LIBS) testing-utils/testing-utils$(LIBEXT)
 
 CATCH_TEST = unit_tests$(EXEEXT)
+EXCLUDED_TESTS=expr_undefined_casts.cpp
+ifneq ($(WITH_MEMORY_ANALYZER),1)
+EXCLUDED_TESTS += gdb_api.cpp
+endif
+
 N_CATCH_TESTS = $(shell \
                   cat $$(find . -name "*.cpp" \
-                    -a -not -name "expr_undefined_casts.cpp") | \
+                $$(printf ' -not -name %s ' $(EXCLUDED_TESTS))) | \
                   grep -E "(SCENARIO|TEST_CASE)" | grep -c -v '\[\.\]')
 
 CLEANFILES = $(CATCH_TEST) testing-utils/testing-utils$(LIBEXT)
