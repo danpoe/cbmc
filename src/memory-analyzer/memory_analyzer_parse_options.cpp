@@ -14,6 +14,7 @@ Author: Malte Mues <mail.mues@gmail.com>
 #include "analyze_symbol.h"
 #include "gdb_api.h"
 
+#include <algorithm>
 #include <fstream>
 
 #include <ansi-c/ansi_c_language.h>
@@ -123,7 +124,13 @@ int memory_analyzer_parse_optionst::doit()
     std::string breakpoint = cmdline.get_value("breakpoint");
     gdb_value_extractor.run_gdb_to_breakpoint(breakpoint);
   }
-  gdb_value_extractor.analyze_symbols(result);
+
+  std::vector<irep_idt> result_ids(result.size());
+  std::transform(
+    result.begin(), result.end(), result_ids.begin(), [](std::string &name) {
+      return irep_idt{name};
+    });
+  gdb_value_extractor.analyze_symbols(result_ids);
 
   std::ofstream file;
 
@@ -169,9 +176,11 @@ void memory_analyzer_parse_optionst::help()
     << '\n'
     << "Usage:                       Purpose:\n"
     << '\n'
-    << " memory-analyzer [-?] [-h] [--help]  show help\n"
-    << " memory-analyzer --version           show version\n"
-    << " memory-analyzer <options> <binary>  analyze binary"
+    << " memory-analyzer [-?] [-h] [--help]                         show help\n"
+    << " memory-analyzer --version                                  show"
+    << " version\n"
+    << " memory-analyzer --symbols <symbol-list> <options> <binary> analyze"
+    << " binary\n"
     << "\n"
     << " --core-file <file>           analyze from core file\n"
     << " --breakpoint <breakpoint>    analyze from breakpoint\n"

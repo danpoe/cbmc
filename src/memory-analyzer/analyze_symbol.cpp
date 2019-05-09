@@ -22,22 +22,21 @@ gdb_value_extractort::gdb_value_extractort(
     symbol_table(symbol_table),
     ns(symbol_table),
     c_converter(ns, expr2c_configurationt::clean_configuration),
-    allocate_objects(ID_C, source_locationt(), "", this->symbol_table)
+    allocate_objects(ID_C, source_locationt(), irep_idt{}, this->symbol_table)
 {
 }
 
-void gdb_value_extractort::analyze_symbols(
-  const std::vector<std::string> &symbols)
+void gdb_value_extractort::analyze_symbols(const std::vector<irep_idt> &symbols)
 {
   // record addresses of given symbols
   for(const auto &id : symbols)
   {
-    const symbol_exprt symbol_expr(id, typet());
+    const symbol_exprt &symbol_expr = ns.lookup(id).symbol_expr();
     const address_of_exprt aoe(symbol_expr);
 
     const std::string c_expr = c_converter.convert(aoe);
     const pointer_valuet &value = gdb_api.get_memory(c_expr);
-    CHECK_RETURN(value.pointee.empty() || (value.pointee == id));
+    CHECK_RETURN(value.pointee.empty() || (id == value.pointee));
 
     values.insert({value.address, symbol_expr});
   }
@@ -143,12 +142,11 @@ exprt gdb_value_extractort::get_char_pointer_value(
     std::string c_expr = c_converter.convert(expr);
     pointer_valuet value = gdb_api.get_memory(c_expr);
     CHECK_RETURN(value.string);
-    std::string string = *value.string;
 
-    string_constantt init(string);
+    string_constantt init(*value.string);
     CHECK_RETURN(to_array_type(init.type()).is_complete());
 
-    symbol_exprt dummy(pointer_typet(init.type(), config.ansi_c.pointer_width));
+    symbol_exprt dummy("tmp", pointer_type(init.type()));
     code_blockt assignments;
 
     const symbol_exprt new_symbol =
@@ -184,7 +182,7 @@ exprt gdb_value_extractort::get_non_char_pointer_value(
 
     const typet target_type = expr.type().subtype();
 
-    symbol_exprt dummy(expr.type());
+    symbol_exprt dummy("tmp", expr.type());
     code_blockt assignments;
 
     const symbol_exprt new_symbol =
@@ -284,6 +282,7 @@ exprt gdb_value_extractort::get_expr_value(
   PRECONDITION(expr.type() == zero_expr.type());
 
   const typet &type = expr.type();
+  PRECONDITION(type.id() != ID_struct);
 
   if(is_c_integral_type(type))
   {
@@ -310,7 +309,7 @@ exprt gdb_value_extractort::get_expr_value(
     return convert_member_name_to_enum_value(
       get_gdb_value(expr), to_c_enum_type(type));
   }
-  else if(type.id() == ID_struct || type.id() == ID_struct_tag)
+  else if(type.id() == ID_struct_tag)
   {
     return get_struct_value(expr, zero_expr, location);
   }
@@ -324,7 +323,7 @@ exprt gdb_value_extractort::get_expr_value(
 
     return get_pointer_value(expr, zero_expr, location);
   }
-  UNREACHABLE;
+  UNIMPLEMENTED;
 }
 
 exprt gdb_value_extractort::get_struct_value(
