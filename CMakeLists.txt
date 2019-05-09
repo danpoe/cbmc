@@ -121,6 +121,15 @@ endfunction()
 option(WITH_MEMORY_ANALYZER OFF
   "build the memory analyzer")
 
+if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+set(WITH_MEMORY_ANALYZER_DEFAULT ON)
+else()
+set(WITH_MEMORY_ANALYZER_DEFAULT OFF)
+endif()
+
+option(WITH_MEMORY_ANALYZER ${WITH_MEMORY_ANALYZER_DEFAULT}
+  "build the memory analyzer")
+
 add_subdirectory(src)
 add_subdirectory(regression)
 add_subdirectory(unit)

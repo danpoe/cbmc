@@ -82,6 +82,19 @@ SRC += analyses/ai/ai.cpp \
        util/unicode.cpp \
        # Empty last line
 
+ifeq ($(OS),Windows_NT)
+    detected_OS := Windows
+else
+    detected_OS := $(shell sh -c 'uname 2>/dev/null || echo Unknown')
+endif
+
+ifeq ($(detected_OS),Linux)
+  ifneq ($(WITH_MEMORY_ANALYZER),0)
+    # only set if it wasn't explicitly unset
+    WITH_MEMORY_ANALYZER=1
+  endif
+endif
+
 ifeq ($(WITH_MEMORY_ANALYZER),1)
   SRC += memory-analyzer/gdb_api.cpp
 endif

@@ -32,9 +32,16 @@ ALLDEPS = cbmc.dir \
           goto-harness.dir \
           # Empty last line
 
+ifeq ($(OS),Windows_NT)
+  detected_OS := Windows
+else
+  detected_OS := $(shell sh -c 'uname 2>/dev/null || echo Unknown')
+endif
 
-ifeq ($(WITH_MEMORY_ANALYZER),1)
-  ALLDEPS += memory-analyzer.dir
+ifeq ($(detected_OS),Linux)
+  all: memory-analyzer.dir
+else ifeq ($(WITH_MEMORY_ANALYZER),1)
+  all: memory-analyzer.dir
 endif
 
 all: $(ALLDEPS)

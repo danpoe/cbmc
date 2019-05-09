@@ -105,6 +105,6 @@ add_subdirectory(goto-analyzer)
 add_subdirectory(goto-diff)
 add_subdirectory(goto-harness)
 
-if(WITH_MEMORY_ANALYZER)
+if(UNIX OR WITH_MEMORY_ANALYZER)
 add_subdirectory(memory-analyzer)
 endif()
