@@ -36,7 +36,6 @@ public:
   void help() override;
 
 protected:
-  ui_message_handlert ui_message_handler;
   messaget message;
 };
 
